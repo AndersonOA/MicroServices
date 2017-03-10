@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
@@ -46,26 +47,31 @@ public class OAuth2Configuration {
 		@Qualifier("customClientDetailsService")
 		private ClientDetailsService clientDetailService;
 		
-		@Bean
-        public JdbcTokenStore tokenStore() {
-			return new JdbcTokenStore(dataSource);
-        }
+		@Autowired
+		@Qualifier("customUserDetailsService")
+		private UserDetailsService userDetailsService;
 		
-        @Bean
-        protected AuthorizationCodeServices authorizationCodeServices() {
-        	return new JdbcAuthorizationCodeServices(dataSource);
-        }
+		@Bean
+		public JdbcTokenStore tokenStore() {
+				return new JdbcTokenStore(dataSource);
+		}
+		
+		@Bean
+		protected AuthorizationCodeServices authorizationCodeServices() {
+			return new JdbcAuthorizationCodeServices(dataSource);
+		}
 		
 		@Override
-		  public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
-		    oauthServer.allowFormAuthenticationForClients();
-		  }
+		public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
+		   oauthServer.allowFormAuthenticationForClients();
+		}
 		
 		@Override
 		public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 			endpoints
 				.tokenStore(tokenStore())
-				.authenticationManager(this.authenticationManager);
+				.authenticationManager(this.authenticationManager)
+				.userDetailsService(this.userDetailsService);
 		}
 
 		@Override
